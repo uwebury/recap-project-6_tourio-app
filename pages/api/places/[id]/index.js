@@ -1,17 +1,45 @@
 import dbConnect from "@/db/connect";
 import Place from "@/db/models/Places";
+import mongoose from "mongoose";
 
 export default async function handler(request, response) {
   await dbConnect();
   const { id } = request.query;
 
+  // Validate the 'id' to ensure it's a valid ObjectId
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return response.status(400).json({ status: `Invalid ID` });
+  }
+
   if (request.method === "GET") {
-    const place = await Place.findById(id);
+    try {
+      const place = await Place.findById(id);
 
-    if (!place) {
-      return response.status(404).json({ status: "Not Found" });
+      if (!place) {
+        return response.status(404).json({ status: `Not found` });
+      }
+
+      response.status(200).json(place);
+    } catch (error) {
+      response.status(500).json({ status: `Server error` });
     }
+  }
 
-    response.status(200).json(place);
+  if (request.method === "PATCH") {
+    try {
+      const updatedPlace = await Place.findByIdAndUpdate(
+        id,
+        { $set: request.body },
+        { new: true } // Returns the updated object
+      );
+
+      if (!updatedPlace) {
+        return response.status(404).json({ status: `Place not found` });
+      }
+
+      response.status(200).json({ status: `Place updated`, updatedPlace });
+    } catch (error) {
+      response.status(500).json({ status: `Server error` });
+    }
   }
 }
