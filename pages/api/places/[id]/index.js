@@ -42,4 +42,10 @@ export default async function handler(request, response) {
       response.status(500).json({ status: `Server error` });
     }
   }
+
+  if (request.method === "DELETE") {
+    await Place.findByIdAndDelete(id);
+
+    response.status(200).json({ status: `Place successfully deleted.` });
+  }
 }
